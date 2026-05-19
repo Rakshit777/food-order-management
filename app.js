@@ -9,6 +9,10 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
+app.use(cors({
+  origin: "https://next-food-order-m9mf.vercel.app",
+  credentials: true
+}));
 app.get("/", (req, res) => {
     res.json({
         success: true,
