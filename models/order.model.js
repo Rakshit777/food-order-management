@@ -1,47 +1,93 @@
-import mongoose from "mongoose";
-const orderSchema = new mongoose.Schema({
-        items: [{
-            menuItem: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Menu",
-                required: true,
-            },
-            quantity: {
-                type: Number,
-                required: true,
-                min: 1,
-            },
-        }, ],
+import { DataTypes, Model } from "sequelize";
+import { getSequelize } from "../config/db.js";
+
+class Order extends Model {}
+class OrderItem extends Model {}
+
+const sequelize = getSequelize();
+
+Order.init(
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
         customerName: {
-            type: String,
-            required: true,
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         address: {
-            type: String,
-            required: true,
+            type: DataTypes.TEXT,
+            allowNull: false,
         },
         phone: {
-            type: String,
-            required: true,
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         totalAmount: {
-            type: Number,
-            required: true,
+            type: DataTypes.FLOAT,
+            allowNull: false,
         },
         status: {
-            type: String,
-            enum: [
+            type: DataTypes.ENUM(
                 "Order Received",
                 "Preparing",
                 "Out for Delivery",
-                "Delivered",
-            ],
-            default: "Order Received",
+                "Delivered"
+            ),
+            allowNull: false,
+            defaultValue: "Order Received",
         },
-    }, {
+    },
+    {
+        sequelize,
+        modelName: "Order",
+        tableName: "orders",
         timestamps: true,
     }
-
 );
-const Order = mongoose.model("Order", orderSchema);
+
+OrderItem.init(
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        orderId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        menuItemId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        quantity: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1,
+        },
+    },
+    {
+        sequelize,
+        modelName: "OrderItem",
+        tableName: "order_items",
+        timestamps: false,
+    }
+);
+
+// Associations: Order -> OrderItem, OrderItem -> Menu
+Order.hasMany(OrderItem, { foreignKey: "orderId", as: "items" });
+OrderItem.belongsTo(Order, { foreignKey: "orderId" });
+
+// Provide a helper to associate OrderItem with Menu after Menu is defined
+const associateModels = (Menu) => {
+    if (!Menu) return;
+    OrderItem.belongsTo(Menu, { foreignKey: "menuItemId", as: "menuItem" });
+    Menu.hasMany(OrderItem, { foreignKey: "menuItemId" });
+};
+
+export { OrderItem, associateModels };
 export default Order;
+

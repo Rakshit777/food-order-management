@@ -1,8 +1,13 @@
 import dotenv from "dotenv";
 import connectDB from "../config/db.js";
-import Menu from "../models/menu.model.js";
 dotenv.config();
-connectDB();
+
+await connectDB();
+const { default: Menu } = await import("../models/menu.model.js");
+const { syncModels } = await import("../config/db.js");
+
+// ensure tables exist/are updated before seeding
+await syncModels({ force: process.env.DB_SYNC_FORCE === "true" });
 
 const menuItems = [{
         name: "Cheese Pizza",
@@ -25,8 +30,8 @@ const menuItems = [{
 ];
 const seedData = async () => {
     try {
-        await Menu.deleteMany();
-        await Menu.insertMany(menuItems);
+        await Menu.destroy({ where: {} });
+        await Menu.bulkCreate(menuItems);
         console.log("Menu seeded successfully");
         process.exit();
     } catch (error) {

@@ -1,7 +1,8 @@
 import Menu from "../models/menu.model.js";
+
 export const getMenu = async (req, res) => {
     try {
-        const menu = await Menu.find();
+        const menu = await Menu.findAll();
         res.status(200).json({
             success: true,
             data: menu,

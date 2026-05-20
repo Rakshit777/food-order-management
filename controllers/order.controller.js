@@ -1,4 +1,4 @@
-import Order from "../models/order.model.js";
+import Order, { OrderItem } from "../models/order.model.js";
 import Menu from "../models/menu.model.js";
 
 export const createOrder = async (req, res) => {
@@ -19,7 +19,7 @@ export const createOrder = async (req, res) => {
 
         let totalAmount = 0;
         for (const item of items) {
-            const menuItem = await Menu.findById(item.menuItem);
+            const menuItem = await Menu.findByPk(item.menuItem);
 
             if (!menuItem) {
                 return res.status(404).json({
@@ -29,13 +29,22 @@ export const createOrder = async (req, res) => {
             }
             totalAmount += menuItem.price * item.quantity;
         }
+
         const order = await Order.create({
-            items,
             customerName,
             address,
             phone,
             totalAmount,
         });
+
+        // create order items
+        for (const item of items) {
+            await OrderItem.create({
+                orderId: order.id,
+                menuItemId: item.menuItem,
+                quantity: item.quantity,
+            });
+        }
         res.status(201).json({
             success: true,
             message: "Order placed successfully",
@@ -51,7 +60,9 @@ export const createOrder = async (req, res) => {
 
 export const getOrders = async (req, res) => {
     try {
-        const orders = await Order.find().populate("items.menuItem");
+        const orders = await Order.findAll({
+                include: [{ model: OrderItem, as: "items", include: [{ model: Menu, as: "menuItem" }] }],
+            });
         res.status(200).json({
             success: true,
             data: orders,
@@ -66,9 +77,9 @@ export const getOrders = async (req, res) => {
 
 export const getSingleOrder = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id).populate(
-            "items.menuItem"
-        );
+        const order = await Order.findByPk(req.params.id, {
+                include: [{ model: OrderItem, as: "items", include: [{ model: Menu, as: "menuItem" }] }],
+            });
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -89,22 +100,16 @@ export const getSingleOrder = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
     try {
-        const {
-            status
-        } = req.body;
-        const order = await Order.findByIdAndUpdate(
-            req.params.id, {
-                status
-            }, {
-                new: true
-            }
-        );
+        const { status } = req.body;
+        const order = await Order.findByPk(req.params.id);
         if (!order) {
             return res.status(404).json({
                 success: false,
                 message: "Order not found",
             });
         }
+        order.status = status;
+        await order.save();
         res.status(200).json({
             success: true,
             message: "Order status updated",
@@ -121,13 +126,15 @@ export const updateOrderStatus = async (req, res) => {
 
 export const deleteOrder = async (req, res) => {
     try {
-        const order = await Order.findByIdAndDelete(req.params.id);
+        const order = await Order.findByPk(req.params.id);
         if (!order) {
             return res.status(404).json({
                 success: false,
                 message: "Order not found",
             });
         }
+        await OrderItem.destroy({ where: { orderId: order.id } });
+        await order.destroy();
         res.status(200).json({
             success: true,
             message: "Order deleted successfully",
