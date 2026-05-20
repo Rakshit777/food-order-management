@@ -1,9 +1,7 @@
 import { DataTypes, Model } from "sequelize";
-import { getSequelize } from "../config/db.js";
+import { sequelize } from "../config/db.js";
 
 class Menu extends Model {}
-
-const sequelize = getSequelize();
 
 Menu.init(
     {
@@ -27,7 +25,7 @@ Menu.init(
         image: {
             type: DataTypes.STRING,
             allowNull: false,
-        },
+        }
     },
     {
         sequelize,
