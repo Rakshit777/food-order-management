@@ -12,10 +12,10 @@ const createDatabaseIfNotExists = async (dbName, config) => {
 
 const connectDB = async () => {
 	try {
-		const dbName = process.env.DB_NAME || "food_order";
-		const dbHost = process.env.DB_HOST || "localhost";
-		const dbUser = process.env.DB_USER || "root";
-		const dbPassword = process.env.DB_PASSWORD || "admin";
+		const dbName = "food_order";
+		const dbHost = "localhost";
+		const dbUser = "root";
+		const dbPassword = "admin";
 		const dbPort = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306;
 
 		// Ensure database exists before initializing Sequelize
