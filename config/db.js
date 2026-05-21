@@ -12,11 +12,11 @@ const createDatabaseIfNotExists = async (dbName, config) => {
 
 const connectDB = async () => {
 	try {
-		const dbName = "bswq1fgchnkfjnlvvsoo";
-		const dbHost = "bswq1fgchnkfjnlvvsoo-mysql.services.clever-cloud.com";
-		const dbUser = "uusg3zgnkukele2a";
-		const dbPassword = "C8EMVPR7vbUps0GExvIV";
-		const dbPort = 3306;
+		const dbNḁme = process.env.DB_NAME;
+		const dbHost = process.env.DB_HOST;
+		const dbUser = process.env.DB_USER;
+		const dbPassword = process.env.DB_PASSWORD;
+		const dbPort = parseInt(process.env.DB_PORT, 10) || 3306;
 
 		// Ensure database exists before initializing Sequelize
 		await createDatabaseIfNotExists(dbName, { host: dbHost, user: dbUser, password: dbPassword, port: dbPort });
